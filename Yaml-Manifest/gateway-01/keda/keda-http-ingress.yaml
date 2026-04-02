@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keda-http-ingress
+  namespace: keda
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keda-add-ons-http-interceptor-proxy # This is the name of the service that KEDA provides to act as a proxy for intercepting HTTP requests and gathering metrics for scaling decisions. By routing traffic through this service, KEDA can monitor the number of pending requests and other relevant metrics to determine when to scale the target service up or down based on the defined scaling policies.
+                port:
+                  number: 8080

@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: checkout-fn
+  namespace: shop
+spec:
+  replicas: 1
+  selector: 
+    matchLabels: 
+      app: checkout-fn 
+  template:
+    metadata: 
+      labels: 
+        app: checkout-fn 
+    spec:
+      securityContext: # This security context is configured to enhance the security of the checkout function by running it as a non-root user, preventing privilege escalation, and ensuring that the filesystem is read-only. This helps to mitigate potential security risks and vulnerabilities in the application.
+         allowPrivilegeEscalation: false
+         readOnlyRootFilesystem: true
+         capabilities:
+           drop:
+             - ALL
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: checkout-fn
+          image: checkout-prod-nr:v2
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 3003 }]
+          securityContext:
+            allowPrivilegeEscalation: false # This setting prevents the container from gaining additional privileges, which can help to mitigate security risks if the application is compromised.
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          env:
+            - name: PRICING_URL
+              value: http://pricing-svc
+            - name: INVENTORY_URL
+              value: http://inventory-svc
+            - name: TIMEOUT_MS
+              value: "1500"
+            - name: PORT
+              value: "3003"
+            - name: DB_HOST
+              value: postgres-svc # This is the service name for the PostgreSQL database, which allows the checkout function to connect to the database using this hostname
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME # The name of the database to connect to
+              value: shop
+            - name: DB_USER # The username for authenticating with the database
+              value: postgres
+            - name: DB_PASSWORD
+              valueFrom:  
+                secretKeyRef:  # This allows us to reference a Kubernetes Secret to securely provide the database password to the application without hardcoding it in the manifest
+                  name: db-creds
+                  key: password
+          readinessProbe:
+            httpGet: { path: /health, port: 3003 }
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 6

@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pricing-fn
+  namespace: shop
+spec:
+  replicas: 1
+  selector: 
+    matchLabels: 
+      app: pricing-fn
+  template:
+    metadata: 
+      labels:
+        app: pricing-fn
+    spec:
+      securityContext:  # This security context is configured to enhance the security of the pricing function by running it as a non-root user, preventing privilege escalation, and ensuring that the filesystem is read-only. This helps to mitigate potential security risks and vulnerabilities in the application.
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: pricing-fn
+          image: pricing-prod-nr:v1
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 3001 }]
+          securityContext: # This security context is configured to enhance the security of the pricing function by preventing privilege escalation, ensuring that the filesystem is read-only, and dropping all capabilities. This helps to mitigate potential security risks and vulnerabilities in the application.
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: PORT
+              value: "3001"
+          readinessProbe:
+            httpGet: { path: /health, port: 3001 }
+            initialDelaySeconds: 3
+            periodSeconds: 5

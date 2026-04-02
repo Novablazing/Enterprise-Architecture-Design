@@ -1,0 +1,20 @@
+apiVersion: http.keda.sh/v1alpha1
+kind: HTTPScaledObject
+metadata:
+  name: http-target-zero
+  namespace: shop
+spec:
+  hosts:
+    - localhost
+  pathPrefixes:
+    - /
+  scaleTargetRef:
+    name: gateway
+    service: gateway-svc
+    port: 80
+  replicas:
+    min: 0
+    max: 5
+  scaledownPeriod: 50 # The amount of time (in seconds) to wait before scaling down a replica after it has been idle. This helps to prevent rapid scaling up and down in response to short bursts of traffic, providing a more stable scaling behavior.
+  targetPendingRequests: 4 # The target number of pending HTTP requests that should be maintained across all replicas of the target service. KEDA will scale the number of replicas up or down to try to maintain this target level of pending requests, allowing for efficient handling of incoming traffic while avoiding over-provisioning of resources.
+  #This means that this congfiguration is based on aggressive scailing, as it will scale down to zero when there are no pending requests, and scale up quickly as soon as requests start coming in, which can be useful for workloads with highly variable traffic patterns.

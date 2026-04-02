@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: shop
+spec:
+  accessModes:
+    - ReadWriteOnce #This means the volume can be mounted as read-write by a single node. This is suitable for our use case where only one instance of PostgreSQL will be running.
+  resources:
+    requests:
+      storage: 1Gi #This specifies that we are requesting 1 gigabyte of storage for our PostgreSQL database. This should be sufficient for a small application, but can be adjusted based on your needs.
