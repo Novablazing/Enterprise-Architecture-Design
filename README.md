@@ -13,4 +13,4 @@ Repeatable troubleshooting workflow
 Persistent storage using PostgreSQL
 
 ## Architecture
-![K3S Shop Architecture](./assets/architecture.svg)
+![K3S Shop Architecture](./asset/architecture.svg)
